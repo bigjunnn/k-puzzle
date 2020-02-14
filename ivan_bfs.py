@@ -12,9 +12,13 @@ class Puzzle(object):
         self.zero_y_coord = -1
         self.parentPuzzle = None
         self.action = None
+        self.currentS = None
 
     def setParentPuzzle(self, parPuzzle):
         self.parentPuzzle = parPuzzle
+
+    def setCurrentState(self, currentState):
+        self.currentS = currentState
 
     def setIsSourcePuzzleToTrue(self):
         self.isSourcePuzzle = True
@@ -37,6 +41,8 @@ class Puzzle(object):
             source_puzzle = Puzzle(init_state, goal_state)
             source_puzzle.setParentPuzzle(None)
             zero_x, zero_y = source_puzzle.findZeroDimension()
+            source_state, source_x, source_y = self.apply_action_to_state(self.init_state, None, zero_x, zero_y)
+            source_puzzle.setCurrentState(source_state)
             source_puzzle.setZeroXAndY(zero_x, zero_y)
 
             FRONTIER.append(source_puzzle)
@@ -49,36 +55,58 @@ class Puzzle(object):
 
                 else:
                     possible_actions = self.findPossibleActions(currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
-                    return ['hello']
+                    return possible_actions
         else:
             return ['UNSOLVABLE']
 
     def findPossibleActions(self, x, y):
-        y_max = len(self.goal_state) - 1
-        x_max = len(self.goal_state[0]) - 1
+        print(x, y)
+        max_y_row = len(self.goal_state) - 1
+        max_x_col = len(self.goal_state[0]) - 1
         output = []
 
-        if y + 1 <= y_max:
-            output.append("UP")
-        if x + 1 <= x_max:
+        if y + 1 <= max_y_row:
+            output.append("DOWN")
+        if x + 1 <= max_x_col:
             output.append("RIGHT")
         if y - 1 >= 0:
-            output.append("DOWN")
+            output.append("UP")
         if x - 1 >= 0:
             output.append("LEFT")
-
+        print(output)
         return output
 
-    def apply_action_to_state(self, prev_state, action, prev_blank_x, prev_blank_y):
+    def apply_action_to_state(self, prev_state, action, col, row):
         if action is None:
-            return prev_state
+            return prev_state, col, row
         else:
-            new_state = copy.deepcopy(prev_state)
+            new_arr = copy.deepcopy(prev_state)
+            new_col = col
+            new_row = row
 
+            # Defines the possible movements and returns an array representing the movement
+            if action == "RIGHT":
+                new_arr[row][col] = new_arr[row][col + 1]
+                new_arr[row][col + 1] = 0
+                new_col = col + 1
 
+            elif action == "LEFT":
+                new_arr[row][col] = new_arr[row][col - 1]
+                new_arr[row][col - 1] = 0
+                new_col = col - 1
 
+            elif action == "UP":
+                new_arr[row][col] = new_arr[row - 1][col]
+                new_arr[row - 1][col] = 0
+                new_row = row - 1
 
-    # you may add more functions if you think is useful
+            elif action == "DOWN":
+                new_arr[row][col] = new_arr[row + 1][col]
+                new_arr[row + 1][col] = 0
+                new_row = row + 1
+
+        return new_arr, new_col, new_row
+
     # Helper method to calculate the permutation inversions in initial state
     def calculateInversions(self):
 
