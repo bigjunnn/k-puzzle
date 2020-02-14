@@ -1,7 +1,13 @@
 import os
 import sys
+import random
+import time
 
 from copy import copy, deepcopy
+
+start_arr = [[1, 2, 3, 10], [4, 9, 5, 8], [14, 13, 0, 2], [1, 7, 11, 3]]
+unsolvable_arr = [[3, 9, 1, 15], [14, 11, 4, 6], [13, 0, 10, 12], [2, 7, 8, 5]]
+goal_arr = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
 
 
 class Puzzle(object):
@@ -13,6 +19,36 @@ class Puzzle(object):
         self.actions = list()
         self.parent = None
         self.children = []
+
+    def __str__(self):
+
+        puzzleStr = "Current state: " + str(self.init_state) + '\n'
+
+        if (self.parent is None):
+            puzzleStr += "Current parent: None" + '\n'
+        else:
+            puzzleStr += "Current parent: " + \
+                str(self.parent.init_state) + '\n'
+
+        puzzleStr += "Actions: "
+
+        for i in range(0, len(self.actions)):
+
+            if (i == 0):
+                puzzleStr += str(self.actions[i]) + ", " + '\n'
+            else:
+                puzzleStr += str(self.actions[i]) + "," + '\n'
+
+        puzzleStr += "Children: "
+
+        for i in range(0, len(self.children)):
+
+            if (i == 0):
+                puzzleStr += str(self.children[i].init_state) + "," + '\n'
+            else:
+                puzzleStr += str(self.children[i].init_state) + ","
+
+        return puzzleStr
 
     def __eq__(self, other):
         return self.init_state == other.init_state
@@ -135,6 +171,8 @@ class Puzzle(object):
         expandedNodes.append(self.moveRight())
 
         expandedNodes = list(filter(None, expandedNodes))
+        random.shuffle(expandedNodes)
+
         return expandedNodes
 
     def solve(self):
@@ -142,34 +180,52 @@ class Puzzle(object):
         # implement your search algorithm here
 
         action_list = []
+        start = time.time()
 
         # Check if solvable
         if (self.isSolvable()):
 
             frontier = []
-            visited = []
+            visited = set()
+            nodesPopped = 0
+            visitedCount = 0
+            addedToFrontier = 0
 
             frontier.append(self)
 
-            # BFS search
             while(len(frontier) > 0):
 
                 currentPuzzle = frontier.pop(0)
+                nodesPopped += 1
 
                 if (currentPuzzle.isGoal()):
                     action_list = currentPuzzle.backtrack()
-                    print(action_list)
+                    nodesPoppedStr = "Total Nodes Popped: " + str(nodesPopped)
+                    print(nodesPoppedStr)
+
+                    frontierStr = "Nodes added to frontier: " + \
+                        str(addedToFrontier)
+                    print(frontierStr)
+
+                    visitedStr = "Repeated node visits: " + str(visitedCount)
+                    print(visitedStr)
+
+                    runtime = "Total runtime: " + str(time.time() - start)
+                    print(runtime)
                     break
                 else:
                     if currentPuzzle not in visited:
                         visited.add(currentPuzzle)
                         frontier.extend(currentPuzzle.expandNodes())
+                        addedToFrontier += len(currentPuzzle.expandNodes())
+                    else:
+                        visitedCount += 1
         else:
             action_list.append("UNSOLVABLE")
-            print(action_list)
+
+        return action_list
 
     # you may add more functions if you think is useful
-    # Backtrack algorithm to trace path from goal node to root node
     def backtrack(self):
 
         action_list = []
@@ -191,7 +247,6 @@ class Puzzle(object):
         action_list.reverse()
         return action_list
 
-    # Helper method to calculate the permutation inversions in initial state
     def calculateInversions(self):
 
         # Flatten array for easier computation
@@ -223,17 +278,16 @@ class Puzzle(object):
 
         n = len(self.init_state)
         inversion_number = self.calculateInversions()
+        zeroPos = self.findZeroPos()
 
-        if (n % 2 != 0 & inversion_number == 0):
+        if (n % 2 != 0 and inversion_number % 2 == 0):
+            return True
+        elif (n % 2 == 0 and inversion_number % 2 == 0 and zeroPos % 2 != 0):
+            return True
+        elif (n % 2 == 0 and inversion_number % 2 != 0 and zeroPos % 2 == 0):
             return True
         else:
-            zeroPos = self.findZeroPos()
-            if (zeroPos % 2 == 0 and inversion_number % 2 != 0):
-                return True
-            elif (zeroPos % 2 != 0 and inversion_number % 2 == 0):
-                return True
-            else:
-                return False
+            return False
 
 
 if __name__ == "__main__":
