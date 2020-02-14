@@ -1,8 +1,18 @@
 import copy
 import sys
+import time
+
+from collections import deque
+from random import shuffle
 
 
 class Puzzle(object):
+    actions = []
+    goalActions = []
+    visited = 0
+    added_to_frontier = 0
+    popped = 0
+
     def __init__(self, init_state, goal_state):
         self.init_state = init_state
         self.goal_state = goal_state
@@ -12,62 +22,72 @@ class Puzzle(object):
         self.zero_y_coord = -1
         self.parentPuzzle = None
         self.action = None
-        self.currentS = None
+        self.cost = 0
+
+    def __eq__(self, other):
+        return self.init_state == other.init_state
+
+    def __hash__(self):
+        hashable = tuple(map(tuple, self.init_state))
+        return hash(hashable)
 
     def setParentPuzzle(self, parPuzzle):
         self.parentPuzzle = parPuzzle
 
-    def setCurrentState(self, currentState):
-        self.currentS = currentState
-
-    def setIsSourcePuzzleToTrue(self):
-        self.isSourcePuzzle = True
-
     def isGoalState(self):
         return self.init_state == self.goal_state
 
-    def setZeroXAndY(self, blank_x, blank_y):
+    def setParams(self, blank_x, blank_y, action_done, parent_puzzle, new_cost):
         self.zero_x_coord = blank_x
         self.zero_y_coord = blank_y
+        self.parentPuzzle = parent_puzzle
+        self.action = action_done
+        self.cost = new_cost
 
-    def setAction(self, actionToBeDone):
-        self.action = actionToBeDone
 
     def solve(self):
-        if self.isSolvable:
-            VISITED = {}
-            FRONTIER = []
+        VISITED = set()
+        FRONTIER = deque()
 
-            source_puzzle = Puzzle(init_state, goal_state)
-            source_puzzle.setParentPuzzle(None)
-            zero_x, zero_y = source_puzzle.findZeroDimension()
-            source_state, source_x, source_y = self.apply_action_to_state(self.init_state, None, zero_x, zero_y)
-            source_puzzle.setCurrentState(source_state)
-            source_puzzle.setZeroXAndY(zero_x, zero_y)
+        source_puzzle = Puzzle(init_state, goal_state)
+        zero_x, zero_y = source_puzzle.findZeroDimension()
+        source_puzzle.setParams(zero_x, zero_y, None, None, 0)
 
+        if source_puzzle.isSolvable():
             FRONTIER.append(source_puzzle)
 
             while len(FRONTIER) > 0:
-                currentPuzzle = FRONTIER.pop()
-                VISITED.append(currentPuzzle.currentS)
+                currentPuzzle = FRONTIER.popleft()
+                Puzzle.popped = Puzzle.popped + 1
+                VISITED.add(currentPuzzle)
 
                 if currentPuzzle.isGoalState():
-                    return ['GOAL']
-
+                    return self.recursiveBacktrack(currentPuzzle)
+                    
                 else:
                     possible_actions = self.findPossibleActions(currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
-                    next_action = "RIGHT"
+                    shuffle(possible_actions)
 
-                    child_puzzle = Puzzle(init_state, goal_state)
-                    child_state, child_x, child_y = self.apply_action_to_state(currentPuzzle.currentS, next_action, currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
-                    print(child_state, child_x, child_y)
+                    for next_action in possible_actions:
+                        child_state, child_x, child_y = self.apply_action_to_state(currentPuzzle.init_state, next_action, currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
+                        child_puzzle = Puzzle(child_state, goal_state)
 
-                    return possible_actions
+                        if child_puzzle not in VISITED:
+                            child_puzzle.setParams(child_x, child_y, next_action, currentPuzzle, currentPuzzle.cost+1)
+                            FRONTIER.append(child_puzzle)
+                            Puzzle.added_to_frontier = Puzzle.added_to_frontier + 1
         else:
             return ['UNSOLVABLE']
+        
+    def recursiveBacktrack(self, goalPuzzle):
+        currPuzzle = goalPuzzle
+        output = []
+        while(currPuzzle.parentPuzzle is not None):
+            output.append(currPuzzle.action)
+            currPuzzle = currPuzzle.parentPuzzle
+        return output
 
     def findPossibleActions(self, x, y):
-        print(x, y)
         max_y_row = len(self.goal_state) - 1
         max_x_col = len(self.goal_state[0]) - 1
         output = []
@@ -80,7 +100,6 @@ class Puzzle(object):
             output.append("UP")
         if x - 1 >= 0:
             output.append("LEFT")
-        print(output)
         return output
 
     def apply_action_to_state(self, prev_state, action, col, row):
@@ -147,12 +166,14 @@ class Puzzle(object):
                     return col, row
 
     def isSolvable(self):
-
-        n = len(self.init_state)
+        selfLen = len(self.init_state)
         inversion_number = self.calculateInversions()
 
-        if n % 2 != 0 & inversion_number == 0:
-            return True
+        if selfLen % 2 != 0:
+            if inversion_number % 2 == 0:
+                return True
+            else:
+                return False
         else:
             zeroPos = self.findZeroPos()
             if zeroPos % 2 == 0 and inversion_number % 2 != 0:
@@ -206,7 +227,10 @@ if __name__ == "__main__":
     goal_state[n - 1][n - 1] = 0
 
     puzzle = Puzzle(init_state, goal_state)
+    tic = time.time()
     ans = puzzle.solve()
+    toc = time.time()
+    print("Found solution in " + str(toc - tic) + " seconds")
 
     with open(sys.argv[2], 'a') as f:
         for answer in ans:
