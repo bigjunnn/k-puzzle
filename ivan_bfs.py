@@ -49,12 +49,19 @@ class Puzzle(object):
 
             while len(FRONTIER) > 0:
                 currentPuzzle = FRONTIER.pop()
+                VISITED.append(currentPuzzle.currentS)
 
                 if currentPuzzle.isGoalState():
-                    return ['hello']
+                    return ['GOAL']
 
                 else:
                     possible_actions = self.findPossibleActions(currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
+                    next_action = "RIGHT"
+
+                    child_puzzle = Puzzle(init_state, goal_state)
+                    child_state, child_x, child_y = self.apply_action_to_state(currentPuzzle.currentS, next_action, currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
+                    print(child_state, child_x, child_y)
+
                     return possible_actions
         else:
             return ['UNSOLVABLE']
@@ -104,8 +111,7 @@ class Puzzle(object):
                 new_arr[row][col] = new_arr[row + 1][col]
                 new_arr[row + 1][col] = 0
                 new_row = row + 1
-
-        return new_arr, new_col, new_row
+            return new_arr, new_col, new_row
 
     # Helper method to calculate the permutation inversions in initial state
     def calculateInversions(self):
