@@ -7,6 +7,7 @@ from collections import deque
 from random import shuffle
 import heapq
 
+
 class Puzzle(object):
     actions = []
     goalActions = []
@@ -30,7 +31,6 @@ class Puzzle(object):
 
     def __lt__(self, other):
         return self.cost < other.cost
-
 
     def __hash__(self):
         hashable = tuple(map(tuple, self.init_state))
@@ -68,17 +68,20 @@ class Puzzle(object):
 
                 if currentPuzzle.isGoalState():
                     return self.recursiveBacktrack(currentPuzzle)
-                    
+
                 else:
-                    possible_actions = self.findPossibleActions(currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
+                    possible_actions = self.findPossibleActions(
+                        currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
                     shuffle(possible_actions)
 
                     for next_action in possible_actions:
-                        child_state, child_x, child_y = self.apply_action_to_state(currentPuzzle.init_state, next_action, currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
+                        child_state, child_x, child_y = self.apply_action_to_state(
+                            currentPuzzle.init_state, next_action, currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
                         child_puzzle = Puzzle(child_state, goal_state)
 
                         if child_puzzle not in VISITED:
-                            child_puzzle.setParams(child_x, child_y, next_action, currentPuzzle, currentPuzzle.cost+1)
+                            child_puzzle.setParams(
+                                child_x, child_y, next_action, currentPuzzle, currentPuzzle.cost+1)
 
                             # IMPLEMENT UR HEURISTIC AND PUT IT HERE
                             # MUST BE A NEGATIVE NUM SINCE HEAPQ IS A MIN HEAP
@@ -88,26 +91,36 @@ class Puzzle(object):
                             Puzzle.added_to_frontier = Puzzle.added_to_frontier + 1
         else:
             return ['UNSOLVABLE']
-        
+
     def recursiveBacktrack(self, goalPuzzle):
         currPuzzle = goalPuzzle
         output = []
-        while currPuzzle.parentPuzzle is not None:
-            output.append(currPuzzle.action)
+        while(currPuzzle.parentPuzzle is not None):
+            action = ""
+            if (currPuzzle.action == "UP"):
+                action = "DOWN"
+            elif (currPuzzle.action == "DOWN"):
+                action = "UP"
+            elif (currPuzzle.action == "LEFT"):
+                action = "RIGHT"
+            else:
+                action = "LEFT"
+
+            output.append(action)
             currPuzzle = currPuzzle.parentPuzzle
+        output.reverse()
         return output
 
     def numOfNumbersOutOfPositionHeuristic(self):
         numRows = len(goal_state)
         numCols = len(goal_state[0])
         counter = 0
-        for x in range (0, numRows):
+        for x in range(0, numRows):
             for y in range(0, numCols):
                 targetNum = x * numCols + y + 1
                 if init_state[x][y] == targetNum:
                     counter = counter + 1
         return counter * -1
-
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
