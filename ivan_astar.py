@@ -114,13 +114,17 @@ class Puzzle(object):
     def numOfNumbersOutOfPositionHeuristic(self):
         numRows = len(goal_state)
         numCols = len(goal_state[0])
+        totalNum = numCols * numRows
         counter = 0
         for x in range(0, numRows):
             for y in range(0, numCols):
                 targetNum = x * numCols + y + 1
+                if targetNum == totalNum:
+                    if init_state[x][y] == 0:
+                        counter = counter + 1
                 if init_state[x][y] == targetNum:
                     counter = counter + 1
-        return counter * -1
+        return (totalNum - counter) * -1
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
@@ -169,7 +173,6 @@ class Puzzle(object):
 
     # Helper method to calculate the permutation inversions in initial state
     def calculateInversions(self):
-
         # Flatten array for easier computation
         flat_arr = []
         for i in range(0, len(self.init_state)):
