@@ -7,6 +7,8 @@ from collections import deque
 from random import shuffle
 import heapq
 
+## A* STAR ALGORITHM WITH MANHATTAN DISTANCE HEURISTIC ##
+
 
 class Puzzle(object):
     actions = []
@@ -58,17 +60,18 @@ class Puzzle(object):
         source_puzzle.setParams(zero_x, zero_y, None, None, 0)
 
         if source_puzzle.isSolvable():
-            heapq.heappush(FRONTIER, (0, source_puzzle))
+
+            heapq.heappush(FRONTIER, (source_puzzle.f_score(), source_puzzle))
 
             while len(FRONTIER) != 0:
-                curr = heapq.heappop(FRONTIER)
-                currentPuzzle = curr[1]
-                Puzzle.popped = Puzzle.popped + 1
+
+                puzzleTuple = heapq.heappop(FRONTIER)
+                currentPuzzle = puzzleTuple[1]
+                Puzzle.popped += 1
                 VISITED.add(currentPuzzle)
 
                 if currentPuzzle.isGoalState():
                     return self.recursiveBacktrack(currentPuzzle)
-
                 else:
                     possible_actions = self.findPossibleActions(
                         currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
@@ -81,14 +84,11 @@ class Puzzle(object):
 
                         if child_puzzle not in VISITED:
                             child_puzzle.setParams(
-                                child_x, child_y, next_action, currentPuzzle, currentPuzzle.cost+1)
+                                child_x, child_y, next_action, currentPuzzle, currentPuzzle.cost + 1)
 
-                            # IMPLEMENT UR HEURISTIC AND PUT IT HERE
-                            # MUST BE A NEGATIVE NUM SINCE HEAPQ IS A MIN HEAP
-
-                            hcost = child_puzzle.numOfNumbersOutOfPositionHeuristic() - child_puzzle.cost
-                            heapq.heappush(FRONTIER, (hcost, child_puzzle))
-                            Puzzle.added_to_frontier = Puzzle.added_to_frontier + 1
+                            fvalue = child_puzzle.f_score()
+                            heapq.heappush(FRONTIER, (fvalue, child_puzzle))
+                            Puzzle.added_to_frontier += 1
         else:
             return ['UNSOLVABLE']
 
@@ -105,26 +105,29 @@ class Puzzle(object):
                 action = "RIGHT"
             else:
                 action = "LEFT"
-
             output.append(action)
             currPuzzle = currPuzzle.parentPuzzle
         output.reverse()
         return output
 
-    def numOfNumbersOutOfPositionHeuristic(self):
-        numRows = len(goal_state)
-        numCols = len(goal_state[0])
-        totalNum = numCols * numRows
-        counter = 0
-        for x in range(0, numRows):
-            for y in range(0, numCols):
-                targetNum = x * numCols + y + 1
-                if targetNum == totalNum:
-                    if init_state[x][y] == 0:
-                        counter = counter + 1
-                if init_state[x][y] == targetNum:
-                    counter = counter + 1
-        return (totalNum - counter) * - 1
+    def manhattanDistance(self):
+        n = len(goal_state)
+        distSum = 0
+        for x in range(0, n):
+            for y in range(0, n):
+                currentValue = self.init_state[x][y]
+
+                if (currentValue != 0):
+                    targetX = int((currentValue - 1) / n)
+                    targetY = (currentValue - 1) % n
+                    distX = x - targetX
+                    distY = y - targetY
+                    distSum += abs(distX) + abs(distY)
+
+        return distSum
+
+    def f_score(self):
+        return self.cost + self.manhattanDistance()
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
@@ -145,7 +148,7 @@ class Puzzle(object):
         if action is None:
             return prev_state, col, row
         else:
-            new_arr = copy.deepcopy(prev_state)
+            new_arr = y = [row[:] for row in prev_state]
             new_col = col
             new_row = row
 
