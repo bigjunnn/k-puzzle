@@ -153,7 +153,7 @@ class Puzzle(object):
         if action is None:
             return prev_state, col, row
         else:
-            new_arr = y = [row[:] for row in prev_state]
+            new_arr = [x[:] for x in prev_state]
             new_col = col
             new_row = row
 
