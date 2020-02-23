@@ -7,25 +7,7 @@ from collections import deque
 from random import shuffle
 import heapq
 
-
-class Puzzle(object):
-    actions = []
-    goalActions = []
-    visited = 0
-    added_to_frontier = 0
-    popped = 0
-
-    def __init__(self, init_state, goal_state):
-        self.init_state = init_state
-        self.goal_state = goal_state
-        self.actions = list()
-        self.isSourcePuzzle = False
-        self.zero_x_coord = -1
-        self.zero_y_coord = -1
-        self.parentPuzzle = None
-        self.action = None
-        self.cost = 0
-
+class Node:
     def __eq__(self, other):
         return self.init_state == other.init_state
 
@@ -35,6 +17,15 @@ class Puzzle(object):
     def __hash__(self):
         hashable = tuple(map(tuple, self.init_state))
         return hash(hashable)
+
+    def __init__(self, init_state, goal_state):
+        self.init_state = init_state
+        self.goal_state = goal_state
+        self.zero_x_coord = -1
+        self.zero_y_coord = -1
+        self.parentPuzzle = None
+        self.action = None
+        self.cost = 0
 
     def setParentPuzzle(self, parPuzzle):
         self.parentPuzzle = parPuzzle
@@ -49,133 +40,80 @@ class Puzzle(object):
         self.action = action_done
         self.cost = new_cost
 
+class Puzzle(object):
+    actions = []
+    goalActions = []
+    visited = 0
+    added_to_frontier = 0
+    popped = 0
+
+    def __init__(self, init_state, goal_state):
+        self.init_state = init_state
+        self.goal_state = goal_state
+        self.actions = list()
+        self.parentPuzzle = None
+        self.action = None
+        self.cost = 0
+
     def solve(self):
         VISITED = set()
         FRONTIER = []
 
-        source_puzzle = Puzzle(init_state, goal_state)
-        zero_x, zero_y = source_puzzle.findZeroDimension()
-        source_puzzle.setParams(zero_x, zero_y, None, None, 0)
+        source_node = Node(init_state, goal_state)
+        zero_x, zero_y = Puzzle.findZeroDimension(source_node)
+        source_node.setParams(zero_x, zero_y, None, None, 0)
 
-        if source_puzzle.isSolvable():
-            heapq.heappush(FRONTIER, (0, source_puzzle))
+        if Puzzle.isSolvable(source_node):
+            heapq.heappush(FRONTIER, (0, source_node))
 
             while len(FRONTIER) != 0:
                 curr = heapq.heappop(FRONTIER)
-                currentPuzzle = curr[1]
+                currentNode = curr[1]
                 Puzzle.popped = Puzzle.popped + 1
-                VISITED.add(currentPuzzle)
+                VISITED.add(currentNode)
 
-                if currentPuzzle.isGoalState():
-                    return self.recursiveBacktrack(currentPuzzle)
+                if currentNode.isGoalState():
+                    return recursiveBacktrack(currentNode)
 
                 else:
                     possible_actions = self.findPossibleActions(
-                        currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
+                        currentNode.zero_x_coord, currentNode.zero_y_coord)
                     shuffle(possible_actions)
 
                     for next_action in possible_actions:
                         child_state, child_x, child_y = self.apply_action_to_state(
-                            currentPuzzle.init_state, next_action, currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
-                        child_puzzle = Puzzle(child_state, goal_state)
+                            currentNode.init_state, next_action, currentNode.zero_x_coord, currentNode.zero_y_coord)
+                        child_node = Node(child_state, goal_state)
 
-                        if child_puzzle not in VISITED:
-                            child_puzzle.setParams(
-                                child_x, child_y, next_action, currentPuzzle, currentPuzzle.cost+1)
+                        if child_node not in VISITED:
+                            child_node.setParams(
+                                child_x, child_y, next_action, currentNode, currentNode.cost+1)
 
                             # IMPLEMENT UR HEURISTIC AND PUT IT HERE
                             # MUST BE A NEGATIVE NUM SINCE HEAPQ IS A MIN HEAP
 
-                            hcost = child_puzzle.manhattanDistance() + child_puzzle.cost
-                            heapq.heappush(FRONTIER, (hcost, child_puzzle))
+                            hcost = Puzzle.manhattanDistance(child_node) + child_node.cost
+                            heapq.heappush(FRONTIER, (hcost, child_node))
                             Puzzle.added_to_frontier = Puzzle.added_to_frontier + 1
         else:
             return ['UNSOLVABLE']
 
-    def recursiveBacktrack(self, goalPuzzle):
-        currPuzzle = goalPuzzle
-        output = []
-        while(currPuzzle.parentPuzzle is not None):
-            action = ""
-            if (currPuzzle.action == "UP"):
-                action = "DOWN"
-            elif (currPuzzle.action == "DOWN"):
-                action = "UP"
-            elif (currPuzzle.action == "LEFT"):
-                action = "RIGHT"
-            else:
-                action = "LEFT"
-
-            output.append(action)
-            currPuzzle = currPuzzle.parentPuzzle
-        output.reverse()
-        return output
-
-    def numOfNumbersOutOfPositionHeuristic(self):
-        numRows = len(goal_state)
-        numCols = len(goal_state[0])
-        totalNum = numCols * numRows
-        counter = 0
-        for x in range(0, numRows):
-            for y in range(0, numCols):
-                targetNum = x * numCols + y + 1
-                if targetNum == totalNum:
-                    if init_state[x][y] == 0:
-                        counter = counter + 1
-                if init_state[x][y] == targetNum:
-                    counter = counter + 1
-        return (totalNum - counter) * -1
-
-    def manhattanDistance(self):
-        numRows = len(goal_state)
-        numCols = len(goal_state[0])
-        totalNum = numCols * numRows
+    @staticmethod
+    def manhattanDistance(inputNode):
+        n = len(goal_state)
         distSum = 0
-        for x in range(0, numRows):
-            for y in range(0, numCols):
-                targetNum = init_state[x][y]
-                if targetNum == 0:
-                    targetNum = totalNum
-                targetCol = (targetNum-1) % numCols
-                targetRow = (int)((targetNum-1) / numCols)
-                distCol = abs(y - targetCol)
-                distRow = abs(x - targetRow)
-                dist = distCol + distRow
-                distSum = distSum + dist
+        for x in range(0, n):
+            for y in range(0, n):
+                currentValue = inputNode.init_state[x][y]
+
+                if currentValue != 0:
+                    targetX = int((currentValue - 1) / n)
+                    targetY = (currentValue - 1) % n
+                    distX = x - targetX
+                    distY = y - targetY
+                    distSum += abs(distX) + abs(distY)
+
         return distSum
-
-    def permutationInversion(self):
-        numRows = len(goal_state)
-        numCols = len(goal_state[0])
-        totalNum = numCols * numRows
-        sumPI = 0
-        for x in range(0, numRows):
-            for y in range(0, numCols):
-                currentValue = init_state[x][y]
-                if currentValue == 0:
-                    continue
-
-                numValLower = 0
-
-                for yRemainder in range(y+1, numCols):
-                    checkValue = init_state[x][yRemainder]
-                    if checkValue == 0:
-                        checkValue = totalNum
-                    if currentValue > checkValue:
-                        numValLower = numValLower + 1
-
-                for xRemain in range(x+1, numRows):
-                    for yRemain in range(0, numCols):
-                        checkValue = init_state[xRemain][yRemain]
-                        if checkValue == 0:
-                            checkValue = totalNum
-                        if currentValue > checkValue:
-                            numValLower = numValLower + 1
-                sumPI = sumPI + numValLower
-                """print(numValLower)
-        print(sumPI)"""
-        return sumPI * -1
-
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
@@ -192,7 +130,8 @@ class Puzzle(object):
             output.append("LEFT")
         return output
 
-    def apply_action_to_state(self, prev_state, action, col, row):
+    @staticmethod
+    def apply_action_to_state(prev_state, action, col, row):
         if action is None:
             return prev_state, col, row
         else:
@@ -223,12 +162,13 @@ class Puzzle(object):
             return new_arr, new_col, new_row
 
     # Helper method to calculate the permutation inversions in initial state
-    def calculateInversions(self):
+    @staticmethod
+    def calculateInversions(inputNode):
         # Flatten array for easier computation
         flat_arr = []
-        for i in range(0, len(self.init_state)):
-            for j in range(0, len(self.init_state)):
-                flat_arr.append(self.init_state[i][j])
+        for i in range(0, len(inputNode.init_state)):
+            for j in range(0, len(inputNode.init_state)):
+                flat_arr.append(inputNode.init_state[i][j])
 
         inversion_count = 0
 
@@ -242,21 +182,24 @@ class Puzzle(object):
 
         return inversion_count
 
-    def findZeroPos(self):
-        for row in range(0, len(self.init_state)):
-            for col in range(0, len(self.init_state)):
-                if self.init_state[row][col] == 0:
-                    return len(self.init_state) - row
+    @staticmethod
+    def findZeroPos(nodeInput):
+        for row in range(0, len(nodeInput.init_state)):
+            for col in range(0, len(nodeInput.init_state)):
+                if nodeInput.init_state[row][col] == 0:
+                    return len(nodeInput.init_state) - row
 
-    def findZeroDimension(self):
-        for row in range(0, len(self.init_state)):
-            for col in range(0, len(self.init_state)):
-                if self.init_state[row][col] == 0:
+    @staticmethod
+    def findZeroDimension(nodeInput):
+        for row in range(0, len(nodeInput.init_state)):
+            for col in range(0, len(nodeInput.init_state)):
+                if nodeInput.init_state[row][col] == 0:
                     return col, row
 
-    def isSolvable(self):
-        selfLen = len(self.init_state)
-        inversion_number = self.calculateInversions()
+    @staticmethod
+    def isSolvable(inputNode):
+        selfLen = len(inputNode.init_state)
+        inversion_number = Puzzle.calculateInversions(inputNode)
 
         if selfLen % 2 != 0:
             if inversion_number % 2 == 0:
@@ -264,13 +207,33 @@ class Puzzle(object):
             else:
                 return False
         else:
-            zeroPos = self.findZeroPos()
+            zeroPos = Puzzle.findZeroPos(inputNode)
             if zeroPos % 2 == 0 and inversion_number % 2 != 0:
                 return True
             elif zeroPos % 2 != 0 and inversion_number % 2 == 0:
                 return True
             else:
                 return False
+
+
+def recursiveBacktrack(goalNode):
+    currPuzzle = goalNode
+    output = []
+    while currPuzzle.parentPuzzle is not None:
+        action = ""
+        if currPuzzle.action == "UP":
+            action = "DOWN"
+        elif currPuzzle.action == "DOWN":
+            action = "UP"
+        elif currPuzzle.action == "LEFT":
+            action = "RIGHT"
+        else:
+            action = "LEFT"
+
+        output.append(action)
+        currPuzzle = currPuzzle.parentPuzzle
+    output.reverse()
+    return output
 
 
 if __name__ == "__main__":
