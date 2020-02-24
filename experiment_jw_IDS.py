@@ -1,21 +1,17 @@
 import copy
 import sys
 import time
-import numpy as np
 
 from collections import deque
-from random import shuffle
-import heapq
-
-## A* STAR ALGORITHM WITH TILES OUT OF ROWS + TILES OUT OF COLS AS HEURISTIC ##
 
 
 class Puzzle(object):
     actions = []
     goalActions = []
     visited = 0
-    added_to_frontier = 0
+    added_to_frontier = 0  # reflective of time complexity
     popped = 0
+    max_frontier = 0  # reflective of space complexity
 
     def __init__(self, init_state, goal_state):
         self.init_state = init_state
@@ -31,12 +27,9 @@ class Puzzle(object):
     def __eq__(self, other):
         return self.init_state == other.init_state
 
-    def __lt__(self, other):
-        return self.cost < other.cost
-
     def __hash__(self):
         hashable = tuple(map(tuple, self.init_state))
-        return hash(hashable)
+        return hash((hashable, self.cost))
 
     def setParentPuzzle(self, parPuzzle):
         self.parentPuzzle = parPuzzle
@@ -52,45 +45,80 @@ class Puzzle(object):
         self.cost = new_cost
 
     def solve(self):
-        VISITED = set()
-        FRONTIER = []
+
+        result = None
+        action_list = list()
+        maxDepth = 0
+
+        if (self.isSolvable()):
+
+            while result is None:
+                result = self.dls(maxDepth)
+                currentDepthStr = "Current depth: " + str(maxDepth)
+                print(currentDepthStr)
+                maxDepth += 1
+            else:
+                action_list = result.recursiveBacktrack(result)
+
+        else:
+            action_list.append("UNSOLVABLE")
+
+        maxDepthStr = "Max depth reached: " + str(len(action_list))
+        print(maxDepthStr)
+
+        return action_list
+
+    def dls(self, maxDepth):
+
+        frontier = deque()
+        VISITED = dict()
+        popped = 0
 
         source_puzzle = Puzzle(init_state, goal_state)
         zero_x, zero_y = source_puzzle.findZeroDimension()
         source_puzzle.setParams(zero_x, zero_y, None, None, 0)
+        frontier.append(source_puzzle)
 
-        if source_puzzle.isSolvable():
+        while (len(frontier) > 0):
+            if (len(frontier) == 0):
+                return None
 
-            heapq.heappush(FRONTIER, (source_puzzle.f_score(), source_puzzle))
+            currentPuzzle = frontier.popleft()
+            popped += 1
+            VISITED[currentPuzzle] = currentPuzzle.cost
 
-            while len(FRONTIER) != 0:
+            if (currentPuzzle.isGoalState()):
+                poppedStr = "Nodes popped: " + str(popped)
+                print(poppedStr)
+                return currentPuzzle
 
-                puzzleTuple = heapq.heappop(FRONTIER)
-                currentPuzzle = puzzleTuple[1]
-                Puzzle.popped += 1
-                VISITED.add(currentPuzzle)
+            if (currentPuzzle.cost < maxDepth):
+                # Add all possible successors into the frontier
+                possible_actions = self.findPossibleActions(
+                    currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
+                childList = currentPuzzle.expandActions(possible_actions)
 
-                if currentPuzzle.isGoalState():
-                    return self.recursiveBacktrack(currentPuzzle)
-                else:
-                    possible_actions = self.findPossibleActions(
-                        currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
-                    shuffle(possible_actions)
+                for child in childList:
+                    # Check if the child is in VISITED
+                    if child in VISITED:
+                        currentCost = VISITED.get(child)
+                        if (child.cost < currentCost):
+                            # Found a lower cost, update VISITED and add the child to frontier
+                            VISITED[child] = child.cost
+                            frontier.appendleft(child)
+                            Puzzle.added_to_frontier += 1  # For time complexity
+                            # For space complexity
+                            if len(frontier) > Puzzle.max_frontier:
+                                Puzzle.max_frontier = len(frontier)
+                    else:
+                        frontier.appendleft(child)
+                        Puzzle.added_to_frontier += 1  # For time complexity
+                        # For space complexity
+                        if len(frontier) > Puzzle.max_frontier:
+                            Puzzle.max_frontier = len(frontier)
 
-                    for next_action in possible_actions:
-                        child_state, child_x, child_y = self.apply_action_to_state(
-                            currentPuzzle.init_state, next_action, currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
-                        child_puzzle = Puzzle(child_state, goal_state)
-
-                        if child_puzzle not in VISITED:
-                            child_puzzle.setParams(
-                                child_x, child_y, next_action, currentPuzzle, currentPuzzle.cost + 1)
-
-                            fvalue = child_puzzle.f_score()
-                            heapq.heappush(FRONTIER, (fvalue, child_puzzle))
-                            Puzzle.added_to_frontier += 1
         else:
-            return ['UNSOLVABLE']
+            return None
 
     def recursiveBacktrack(self, goalPuzzle):
         currPuzzle = goalPuzzle
@@ -105,31 +133,23 @@ class Puzzle(object):
                 action = "RIGHT"
             else:
                 action = "LEFT"
+
             output.append(action)
             currPuzzle = currPuzzle.parentPuzzle
         output.reverse()
         return output
 
-    def hValue(self):
-        count = 0
-        n = len(self.init_state)
-        for x in range(0, n):
-            for y in range(0, n):
-                current = self.init_state[x][y]
+    def expandActions(self, actionList):
+        child_puzzle_list = []
+        for next_action in actionList:
+            child_state, child_x, child_y = self.apply_action_to_state(
+                self.init_state, next_action, self.zero_x_coord, self.zero_y_coord)
+            child_puzzle = Puzzle(child_state, goal_state)
+            child_puzzle.setParams(
+                child_x, child_y, next_action, self, self.cost + 1)
+            child_puzzle_list.append(child_puzzle)
 
-                if (current != 0):
-                    targetX = int((current - 1) / n)
-                    targetY = (current - 1) % n
-
-                    if (x != targetX):
-                        count += 1
-                    if (y != targetY):
-                        count += 1
-
-        return count
-
-    def f_score(self):
-        return self.cost + self.hValue()
+        return child_puzzle_list
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
@@ -150,7 +170,7 @@ class Puzzle(object):
         if action is None:
             return prev_state, col, row
         else:
-            new_arr = y = [row[:] for row in prev_state]
+            new_arr = [x[:] for x in prev_state]
             new_col = col
             new_row = row
 
@@ -178,6 +198,7 @@ class Puzzle(object):
 
     # Helper method to calculate the permutation inversions in initial state
     def calculateInversions(self):
+
         # Flatten array for easier computation
         flat_arr = []
         for i in range(0, len(self.init_state)):
@@ -274,6 +295,9 @@ if __name__ == "__main__":
     ans = puzzle.solve()
     toc = time.time()
     print("Found solution in " + str(toc - tic) + " seconds")
+    print("Time - No. nodes added to frontier: " + str(puzzle.added_to_frontier))
+    print("Space - Max frontier size: " + str(puzzle.max_frontier))
+    print("Size of solution: " + str(len(ans)))
 
     with open(sys.argv[2], 'a') as f:
         for answer in ans:

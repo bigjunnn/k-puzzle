@@ -4,17 +4,15 @@ import time
 
 from collections import deque
 from random import shuffle
-import heapq
-
-## A* STAR ALGORITHM WITH MISPLACED TILES AS HEURISTIC ##
 
 
 class Puzzle(object):
     actions = []
     goalActions = []
     visited = 0
-    added_to_frontier = 0
+    added_to_frontier = 0  # reflective of time complexity
     popped = 0
+    max_frontier = 0  # reflective of space complexity
 
     def __init__(self, init_state, goal_state):
         self.init_state = init_state
@@ -29,9 +27,6 @@ class Puzzle(object):
 
     def __eq__(self, other):
         return self.init_state == other.init_state
-
-    def __lt__(self, other):
-        return self.cost < other.cost
 
     def __hash__(self):
         hashable = tuple(map(tuple, self.init_state))
@@ -52,25 +47,23 @@ class Puzzle(object):
 
     def solve(self):
         VISITED = set()
-        FRONTIER = []
+        FRONTIER = deque()
 
         source_puzzle = Puzzle(init_state, goal_state)
         zero_x, zero_y = source_puzzle.findZeroDimension()
         source_puzzle.setParams(zero_x, zero_y, None, None, 0)
 
         if source_puzzle.isSolvable():
+            FRONTIER.append(source_puzzle)
 
-            heapq.heappush(FRONTIER, (source_puzzle.f_score(), source_puzzle))
-
-            while len(FRONTIER) != 0:
-
-                puzzleTuple = heapq.heappop(FRONTIER)
-                currentPuzzle = puzzleTuple[1]
-                Puzzle.popped += 1
+            while len(FRONTIER) > 0:
+                currentPuzzle = FRONTIER.popleft()
+                Puzzle.popped = Puzzle.popped + 1
                 VISITED.add(currentPuzzle)
 
                 if currentPuzzle.isGoalState():
                     return self.recursiveBacktrack(currentPuzzle)
+
                 else:
                     possible_actions = self.findPossibleActions(
                         currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
@@ -83,11 +76,12 @@ class Puzzle(object):
 
                         if child_puzzle not in VISITED:
                             child_puzzle.setParams(
-                                child_x, child_y, next_action, currentPuzzle, currentPuzzle.cost + 1)
-
-                            fvalue = child_puzzle.f_score()
-                            heapq.heappush(FRONTIER, (fvalue, child_puzzle))
-                            Puzzle.added_to_frontier += 1
+                                child_x, child_y, next_action, currentPuzzle, currentPuzzle.cost+1)
+                            FRONTIER.append(child_puzzle)
+                            Puzzle.added_to_frontier = Puzzle.added_to_frontier + 1
+                            # For space complexity
+                            if len(FRONTIER) > Puzzle.max_frontier:
+                                Puzzle.max_frontier = len(FRONTIER)
         else:
             return ['UNSOLVABLE']
 
@@ -104,25 +98,11 @@ class Puzzle(object):
                 action = "RIGHT"
             else:
                 action = "LEFT"
+
             output.append(action)
             currPuzzle = currPuzzle.parentPuzzle
         output.reverse()
         return output
-
-    def numOfMisplaced(self):
-        count = 0
-        gridSize = len(self.init_state)
-        current = self.init_state
-        goal = self.goal_state
-        for i in range(0, gridSize):
-            for j in range(0, gridSize):
-                if current[i][j] != current[i][j] and goal[i][j] != 0:
-                    count += 1
-
-        return count
-
-    def f_score(self):
-        return self.cost + self.numOfMisplaced()
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
@@ -171,6 +151,7 @@ class Puzzle(object):
 
     # Helper method to calculate the permutation inversions in initial state
     def calculateInversions(self):
+
         # Flatten array for easier computation
         flat_arr = []
         for i in range(0, len(self.init_state)):
@@ -267,6 +248,9 @@ if __name__ == "__main__":
     ans = puzzle.solve()
     toc = time.time()
     print("Found solution in " + str(toc - tic) + " seconds")
+    print("Time - No. nodes added to frontier: " + str(puzzle.added_to_frontier))
+    print("Space - Max frontier size: " + str(puzzle.max_frontier))
+    print("Size of solution: " + str(len(ans)))
 
     with open(sys.argv[2], 'a') as f:
         for answer in ans:

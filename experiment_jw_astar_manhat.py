@@ -1,20 +1,22 @@
 import copy
 import sys
 import time
+import numpy as np
 
 from collections import deque
 from random import shuffle
 import heapq
 
-## A* STAR ALGORITHM WITH MISPLACED TILES AS HEURISTIC ##
+## A* STAR ALGORITHM WITH MANHATTAN DISTANCE HEURISTIC ##
 
 
 class Puzzle(object):
     actions = []
     goalActions = []
     visited = 0
-    added_to_frontier = 0
+    added_to_frontier = 0  # reflective of time complexity
     popped = 0
+    max_frontier = 0  # reflective of space complexity
 
     def __init__(self, init_state, goal_state):
         self.init_state = init_state
@@ -88,6 +90,10 @@ class Puzzle(object):
                             fvalue = child_puzzle.f_score()
                             heapq.heappush(FRONTIER, (fvalue, child_puzzle))
                             Puzzle.added_to_frontier += 1
+
+                            # For space complexity
+                            if len(FRONTIER) > Puzzle.max_frontier:
+                                Puzzle.max_frontier = len(FRONTIER)
         else:
             return ['UNSOLVABLE']
 
@@ -109,20 +115,24 @@ class Puzzle(object):
         output.reverse()
         return output
 
-    def numOfMisplaced(self):
-        count = 0
-        gridSize = len(self.init_state)
-        current = self.init_state
-        goal = self.goal_state
-        for i in range(0, gridSize):
-            for j in range(0, gridSize):
-                if current[i][j] != current[i][j] and goal[i][j] != 0:
-                    count += 1
+    def manhattanDistance(self):
+        n = len(goal_state)
+        distSum = 0
+        for x in range(0, n):
+            for y in range(0, n):
+                currentValue = self.init_state[x][y]
 
-        return count
+                if (currentValue != 0):
+                    targetX = int((currentValue - 1) / n)
+                    targetY = (currentValue - 1) % n
+                    distX = x - targetX
+                    distY = y - targetY
+                    distSum += abs(distX) + abs(distY)
+
+        return distSum
 
     def f_score(self):
-        return self.cost + self.numOfMisplaced()
+        return self.cost + self.manhattanDistance()
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
@@ -267,6 +277,9 @@ if __name__ == "__main__":
     ans = puzzle.solve()
     toc = time.time()
     print("Found solution in " + str(toc - tic) + " seconds")
+    print("Time - No. nodes added to frontier: " + str(puzzle.added_to_frontier))
+    print("Space - Max frontier size: " + str(puzzle.max_frontier))
+    print("Size of solution: " + str(len(ans)))
 
     with open(sys.argv[2], 'a') as f:
         for answer in ans:

@@ -1,6 +1,7 @@
 import copy
 import sys
 import time
+import numpy as np
 
 from collections import deque
 from random import shuffle
@@ -13,8 +14,9 @@ class Puzzle(object):
     actions = []
     goalActions = []
     visited = 0
-    added_to_frontier = 0
+    added_to_frontier = 0  # reflective of time complexity
     popped = 0
+    max_frontier = 0  # reflective of space complexity
 
     def __init__(self, init_state, goal_state):
         self.init_state = init_state
@@ -88,6 +90,10 @@ class Puzzle(object):
                             fvalue = child_puzzle.f_score()
                             heapq.heappush(FRONTIER, (fvalue, child_puzzle))
                             Puzzle.added_to_frontier += 1
+
+                            # For space complexity
+                            if len(FRONTIER) > Puzzle.max_frontier:
+                                Puzzle.max_frontier = len(FRONTIER)
         else:
             return ['UNSOLVABLE']
 
@@ -267,6 +273,9 @@ if __name__ == "__main__":
     ans = puzzle.solve()
     toc = time.time()
     print("Found solution in " + str(toc - tic) + " seconds")
+    print("Time - No. nodes added to frontier: " + str(puzzle.added_to_frontier))
+    print("Space - Max frontier size: " + str(puzzle.max_frontier))
+    print("Size of solution: " + str(len(ans)))
 
     with open(sys.argv[2], 'a') as f:
         for answer in ans:
