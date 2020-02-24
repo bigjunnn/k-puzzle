@@ -7,14 +7,14 @@ import CS3243_P1_22_2
 import CS3243_P1_22_3
 import CS3243_P1_22_4
 
-## Empirical Experiment - Usage: python CS3234_P1_22_5 <output_file> ##
+## Empirical Experiment - Usage: python CS3243_P1_22_5.py <output_file> ##
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         raise ValueError("Wrong number of arguments!")
 
-    test_size = 2
+    test_size = 100
     n = 3
     max_num = n ** 2 - 1
     test_arr = list(range(0, max_num+1))
