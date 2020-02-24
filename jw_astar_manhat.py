@@ -1,9 +1,6 @@
-import copy
 import sys
 import time
 
-
-from collections import deque
 from random import shuffle
 import heapq
 
@@ -92,6 +89,7 @@ class Puzzle(object):
                         child_node = Node(child_state, goal_state)
 
                         if child_node not in VISITED:
+                            child_node = Node(child_state, goal_state)
                             child_node.setParams(
                                 child_x, child_y, next_action, currNode, currNode.cost + 1)
 

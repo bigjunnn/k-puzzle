@@ -1,9 +1,6 @@
-import copy
 import sys
 import time
 
-
-from collections import deque
 from random import shuffle
 import heapq
 
@@ -84,7 +81,6 @@ class Puzzle(object):
                 else:
                     possible_actions = self.findPossibleActions(
                         currNode.zero_x_coord, currNode.zero_y_coord)
-                    shuffle(possible_actions)
 
                     for next_action in possible_actions:
                         child_state, child_x, child_y = self.apply_action_to_state(

@@ -5,16 +5,13 @@ import time
 from random import shuffle
 import heapq
 
+
 class Node:
     def __eq__(self, other):
         return self.init_state == other.init_state
 
     def __lt__(self, other):
         return self.cost < other.cost
-
-    def __hash__(self):
-        hashable = tuple(map(tuple, self.init_state))
-        return hash(hashable)
 
     def __init__(self, init_state, goal_state):
         self.init_state = init_state
@@ -37,6 +34,7 @@ class Node:
         self.parentPuzzle = parent_puzzle
         self.action = action_done
         self.cost = new_cost
+
 
 class Puzzle(object):
     actions = []
@@ -158,7 +156,7 @@ class Puzzle(object):
 
     @staticmethod
     def manhattanDistance(inputNode):
-        n = len(goal_state)
+        n = len(inputNode.goal_state)
         distSum = 0
         for x in range(0, n):
             for y in range(0, n):
@@ -175,7 +173,7 @@ class Puzzle(object):
 
     @staticmethod
     def f_score(inputNode):
-        return inputNode.cost + Puzzle.manhattanDistance(inputNode)
+        return ((Puzzle.countHorizontalConflict(inputNode) + Puzzle.countVerticalConflict(inputNode)) * 2) + inputNode.cost + Puzzle.manhattanDistance(inputNode)
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
@@ -197,7 +195,7 @@ class Puzzle(object):
         if action is None:
             return prev_state, col, row
         else:
-            new_arr = copy.deepcopy(prev_state)
+            new_arr = [x[:] for x in prev_state]
             new_col = col
             new_row = row
 
