@@ -1,9 +1,7 @@
 import copy
 import sys
 import time
-import numpy as np
 
-from collections import deque
 from random import shuffle
 import heapq
 
