@@ -1,11 +1,11 @@
 import copy
 import sys
 import time
-import numpy as np
 
 from collections import deque
 from random import shuffle
 import heapq
+
 
 class Node:
     def __eq__(self, other):
@@ -39,6 +39,7 @@ class Node:
         self.parentPuzzle = parent_puzzle
         self.action = action_done
         self.cost = new_cost
+
 
 class Puzzle(object):
     actions = []
@@ -177,7 +178,7 @@ class Puzzle(object):
 
     @staticmethod
     def f_score(inputNode):
-        return ((Puzzle.countHorizontalConflict(inputNode) + Puzzle.countVerticalConflict(inputNode)) * 2) + inputNode.cost + Puzzle.manhattanDistance(inputNode)
+        return inputNode.cost + Puzzle.manhattanDistance(inputNode)
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
