@@ -1,11 +1,10 @@
 import copy
 import sys
 import time
-import numpy as np
 
-from collections import deque
 from random import shuffle
 import heapq
+
 
 class Node:
     def __eq__(self, other):
@@ -13,10 +12,6 @@ class Node:
 
     def __lt__(self, other):
         return self.cost < other.cost
-
-    def __hash__(self):
-        hashable = tuple(map(tuple, self.init_state))
-        return hash(hashable)
 
     def __init__(self, init_state, goal_state):
         self.init_state = init_state
@@ -39,6 +34,7 @@ class Node:
         self.parentPuzzle = parent_puzzle
         self.action = action_done
         self.cost = new_cost
+
 
 class Puzzle(object):
     actions = []
@@ -160,7 +156,7 @@ class Puzzle(object):
 
     @staticmethod
     def manhattanDistance(inputNode):
-        n = len(goal_state)
+        n = len(inputNode.goal_state)
         distSum = 0
         for x in range(0, n):
             for y in range(0, n):
@@ -199,7 +195,7 @@ class Puzzle(object):
         if action is None:
             return prev_state, col, row
         else:
-            new_arr = copy.deepcopy(prev_state)
+            new_arr = [x[:] for x in prev_state]
             new_col = col
             new_row = row
 

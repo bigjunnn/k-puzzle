@@ -3,6 +3,9 @@ import sys
 import time
 
 from collections import deque
+from random import shuffle
+
+## UNINFORMED SEARCH ALGORITHM - BFS ##
 
 
 class Puzzle(object):
@@ -28,7 +31,7 @@ class Puzzle(object):
 
     def __hash__(self):
         hashable = tuple(map(tuple, self.init_state))
-        return hash((hashable, self.cost))
+        return hash(hashable)
 
     def setParentPuzzle(self, parPuzzle):
         self.parentPuzzle = parPuzzle
@@ -44,72 +47,41 @@ class Puzzle(object):
         self.cost = new_cost
 
     def solve(self):
-
-        result = None
-        action_list = list()
-        maxDepth = 0
-
-        if (self.isSolvable()):
-
-            while result is None:
-                result = self.dls(maxDepth)
-                currentDepthStr = "Current depth: " + str(maxDepth)
-                print(currentDepthStr)
-                maxDepth += 1
-            else:
-                action_list = result.recursiveBacktrack(result)
-
-        else:
-            action_list.append("UNSOLVABLE")
-
-        maxDepthStr = "Max depth reached: " + str(len(action_list))
-        print(maxDepthStr)
-
-        return action_list
-
-    def dls(self, maxDepth):
-
-        frontier = deque()
-        VISITED = dict()
-        popped = 0
+        VISITED = set()
+        FRONTIER = deque()
 
         source_puzzle = Puzzle(init_state, goal_state)
         zero_x, zero_y = source_puzzle.findZeroDimension()
         source_puzzle.setParams(zero_x, zero_y, None, None, 0)
-        frontier.append(source_puzzle)
 
-        while (len(frontier) > 0):
-            if (len(frontier) == 0):
-                return None
+        if source_puzzle.isSolvable():
+            FRONTIER.append(source_puzzle)
 
-            currentPuzzle = frontier.popleft()
-            popped += 1
-            VISITED[currentPuzzle] = currentPuzzle.cost
+            while len(FRONTIER) > 0:
+                currentPuzzle = FRONTIER.popleft()
+                Puzzle.popped = Puzzle.popped + 1
+                VISITED.add(currentPuzzle)
 
-            if (currentPuzzle.isGoalState()):
-                poppedStr = "Nodes popped: " + str(popped)
-                print(poppedStr)
-                return currentPuzzle
+                if currentPuzzle.isGoalState():
+                    return self.recursiveBacktrack(currentPuzzle)
 
-            if (currentPuzzle.cost < maxDepth):
-                # Add all possible successors into the frontier
-                possible_actions = self.findPossibleActions(
-                    currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
-                childList = currentPuzzle.expandActions(possible_actions)
+                else:
+                    possible_actions = self.findPossibleActions(
+                        currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
+                    shuffle(possible_actions)
 
-                for child in childList:
-                    # Check if the child is in VISITED
-                    if child in VISITED:
-                        currentCost = VISITED.get(child)
-                        if (child.cost < currentCost):
-                            # Found a lower cost, update VISITED and add the child to frontier
-                            VISITED[child] = child.cost
-                            frontier.appendleft(child)
-                    else:
-                        frontier.appendleft(child)
+                    for next_action in possible_actions:
+                        child_state, child_x, child_y = self.apply_action_to_state(
+                            currentPuzzle.init_state, next_action, currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
+                        child_puzzle = Puzzle(child_state, goal_state)
 
+                        if child_puzzle not in VISITED:
+                            child_puzzle.setParams(
+                                child_x, child_y, next_action, currentPuzzle, currentPuzzle.cost+1)
+                            FRONTIER.append(child_puzzle)
+                            Puzzle.added_to_frontier = Puzzle.added_to_frontier + 1
         else:
-            return None
+            return ['UNSOLVABLE']
 
     def recursiveBacktrack(self, goalPuzzle):
         currPuzzle = goalPuzzle
@@ -130,18 +102,6 @@ class Puzzle(object):
         output.reverse()
         return output
 
-    def expandActions(self, actionList):
-        child_puzzle_list = []
-        for next_action in actionList:
-            child_state, child_x, child_y = self.apply_action_to_state(
-                self.init_state, next_action, self.zero_x_coord, self.zero_y_coord)
-            child_puzzle = Puzzle(child_state, goal_state)
-            child_puzzle.setParams(
-                child_x, child_y, next_action, self, self.cost + 1)
-            child_puzzle_list.append(child_puzzle)
-
-        return child_puzzle_list
-
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
         max_x_col = len(self.goal_state[0]) - 1
@@ -161,7 +121,7 @@ class Puzzle(object):
         if action is None:
             return prev_state, col, row
         else:
-            new_arr = copy.deepcopy(prev_state)
+            new_arr = [x[:] for x in prev_state]
             new_col = col
             new_row = row
 
