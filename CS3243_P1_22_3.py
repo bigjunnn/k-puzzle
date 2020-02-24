@@ -1,13 +1,10 @@
-import copy
 import sys
 import time
 
-
-from collections import deque
 from random import shuffle
 import heapq
 
-## A* STAR ALGORITHM WITH LINEAR CONFLICT HEURISTIC ##
+## A* STAR ALGORITHM WITH MANHATTAN DISTANCE HEURISTIC ##
 
 
 class Node:
@@ -92,6 +89,7 @@ class Puzzle(object):
                         child_node = Node(child_state, goal_state)
 
                         if child_node not in VISITED:
+                            child_node = Node(child_state, goal_state)
                             child_node.setParams(
                                 child_x, child_y, next_action, currNode, currNode.cost + 1)
 
@@ -102,81 +100,25 @@ class Puzzle(object):
             return ['UNSOLVABLE']
 
     @staticmethod
-    def countHorizontalConflict(inputNode):
-        n = len(inputNode.init_state)
-        totalCount = 0
+    def manhattanDistance(inputNode):
+        n = len(inputNode.goal_state)
+        distSum = 0
+        for x in range(0, n):
+            for y in range(0, n):
+                currentValue = inputNode.init_state[x][y]
 
-        for row in range(0, n):
-            # Returns the entire row array
-            rowArr = inputNode.init_state[row]
+                if (currentValue != 0):
+                    targetX = int((currentValue - 1) / n)
+                    targetY = (currentValue - 1) % n
+                    distX = x - targetX
+                    distY = y - targetY
+                    distSum += abs(distX) + abs(distY)
 
-            for i in range(0, n):
-                conflictCount = 0
-                currValue = rowArr[i]
-
-                for j in range(i + 1, n):
-                    nextValue = rowArr[j]
-
-                    if (currValue != 0 and nextValue != 0):
-                        currTargetRow = int((currValue - 1) / n)
-                        nextTargetRow = int((nextValue - 1) / n)
-
-                        # Both current and next values are in correct row
-                        if (row == currTargetRow and row == nextTargetRow):
-                            if currValue > nextValue:
-                                conflictCount += 1
-
-                if (conflictCount > 0):
-                    totalCount += 1
-
-        return totalCount
-
-    @staticmethod
-    def countVerticalConflict(inputNode):
-        n = len(inputNode.init_state)
-        totalCount = 0
-
-        for col in range(0, n):
-            # Returns the entire column arr
-            colArr = [item[col] for item in inputNode.init_state]
-
-            for i in range(0, n):
-                conflictCount = 0
-                currValue = colArr[i]
-
-                for j in range(i + 1, n):
-                    nextValue = colArr[j]
-
-                    if (currValue != 0 and nextValue != 0):
-                        currTargetCol = (currValue - 1) % n
-                        nextTargetCol = (nextValue - 1) % n
-
-                        # Both curr and next values are in correct column
-                        if (col == currTargetCol and col == nextTargetCol):
-                            if currValue > nextValue:
-                                conflictCount += 1
-
-                if (conflictCount > 0):
-                    totalCount += 1
-
-        return totalCount
-
-    @staticmethod
-    def numOfMisplaced(inputNode):
-        count = 0
-        gridSize = len(inputNode.init_state)
-        current = inputNode.init_state
-        goal = inputNode.goal_state
-        for i in range(0, gridSize):
-            for j in range(0, gridSize):
-                if current[i][j] != current[i][j] and goal[i][j] != 0:
-                    count += 1
-
-        return count
+        return distSum
 
     @staticmethod
     def f_score(inputNode):
-        return inputNode.cost + Puzzle.numOfMisplaced(inputNode)
+        return inputNode.cost + Puzzle.manhattanDistance(inputNode)
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1

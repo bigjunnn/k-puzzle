@@ -4,7 +4,7 @@ import time
 from random import shuffle
 import heapq
 
-## A* STAR ALGORITHM WITH LINEAR CONFLICT HEURISTIC ##
+## A* STAR ALGORITHM WITH NO. OF MISPLACED TILES HEURISTIC ##
 
 
 class Node:
@@ -89,7 +89,6 @@ class Puzzle(object):
                         child_node = Node(child_state, goal_state)
 
                         if child_node not in VISITED:
-                            child_node = Node(child_state, goal_state)
                             child_node.setParams(
                                 child_x, child_y, next_action, currNode, currNode.cost + 1)
 
@@ -100,25 +99,21 @@ class Puzzle(object):
             return ['UNSOLVABLE']
 
     @staticmethod
-    def manhattanDistance(inputNode):
-        n = len(inputNode.goal_state)
-        distSum = 0
-        for x in range(0, n):
-            for y in range(0, n):
-                currentValue = inputNode.init_state[x][y]
+    def numOfMisplaced(inputNode):
+        count = 0
+        gridSize = len(inputNode.init_state)
+        current = inputNode.init_state
+        goal = inputNode.goal_state
+        for i in range(0, gridSize):
+            for j in range(0, gridSize):
+                if current[i][j] != current[i][j] and goal[i][j] != 0:
+                    count += 1
 
-                if (currentValue != 0):
-                    targetX = int((currentValue - 1) / n)
-                    targetY = (currentValue - 1) % n
-                    distX = x - targetX
-                    distY = y - targetY
-                    distSum += abs(distX) + abs(distY)
-
-        return distSum
+        return count
 
     @staticmethod
     def f_score(inputNode):
-        return inputNode.cost + Puzzle.manhattanDistance(inputNode)
+        return inputNode.cost + Puzzle.numOfMisplaced(inputNode)
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
