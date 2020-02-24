@@ -92,11 +92,71 @@ class Puzzle(object):
                             # IMPLEMENT UR HEURISTIC AND PUT IT HERE
                             # MUST BE A NEGATIVE NUM SINCE HEAPQ IS A MIN HEAP
 
-                            hcost = Puzzle.manhattanDistance(child_node) + child_node.cost
+                            hcost = Puzzle.f_score(child_node)
                             heapq.heappush(FRONTIER, (hcost, child_node))
                             Puzzle.added_to_frontier = Puzzle.added_to_frontier + 1
         else:
             return ['UNSOLVABLE']
+
+    @staticmethod
+    def countHorizontalConflict(inputNode):
+        n = len(inputNode.init_state)
+        totalCount = 0
+
+        for row in range(0, n):
+            # Returns the entire row array
+            rowArr = inputNode.init_state[row]
+
+            for i in range(0, n):
+                conflictCount = 0
+                currValue = rowArr[i]
+
+                for j in range(i + 1, n):
+                    nextValue = rowArr[j]
+
+                    if currValue != 0 and nextValue != 0:
+                        currTargetRow = int((currValue - 1) / n)
+                        nextTargetRow = int((nextValue - 1) / n)
+
+                        # Both current and next values are in correct row
+                        if row == currTargetRow and row == nextTargetRow:
+                            if currValue > nextValue:
+                                conflictCount += 1
+
+                if conflictCount > 0:
+                    totalCount += 1
+
+        return totalCount
+
+    @staticmethod
+    def countVerticalConflict(inputNode):
+        n = len(inputNode.init_state)
+        totalCount = 0
+
+        for col in range(0, n):
+            # Returns the entire column arr
+            colArr = [item[col] for item in inputNode.init_state]
+
+            for i in range(0, n):
+                conflictCount = 0
+                currValue = colArr[i]
+
+                for j in range(i + 1, n):
+                    nextValue = colArr[j]
+
+                    if currValue != 0 and nextValue != 0:
+                        currTargetCol = (currValue - 1) % n
+                        nextTargetCol = (nextValue - 1) % n
+
+                        # Both curr and next values are in correct column
+                        if col == currTargetCol and col == nextTargetCol:
+                            if currValue > nextValue:
+                                conflictCount += 1
+
+                if conflictCount > 0:
+                    totalCount += 1
+
+        return totalCount
 
     @staticmethod
     def manhattanDistance(inputNode):
@@ -114,6 +174,10 @@ class Puzzle(object):
                     distSum += abs(distX) + abs(distY)
 
         return distSum
+
+    @staticmethod
+    def f_score(inputNode):
+        return ((Puzzle.countHorizontalConflict(inputNode) + Puzzle.countVerticalConflict(inputNode)) * 2) + inputNode.cost + Puzzle.manhattanDistance(inputNode)
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
