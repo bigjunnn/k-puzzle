@@ -2,7 +2,6 @@ import copy
 import sys
 import time
 
-from collections import deque
 from random import shuffle
 import heapq
 
