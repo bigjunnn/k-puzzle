@@ -7,15 +7,16 @@ from collections import deque
 from random import shuffle
 import heapq
 
-## A* STAR ALGORITHM WITH TILES OUT OF ROWS + TILES OUT OF COLS AS HEURISTIC ##
+## A* STAR ALGORITHM WITH LINEAR CONFLICT HEURISTIC ##
 
 
 class Puzzle(object):
     actions = []
     goalActions = []
     visited = 0
-    added_to_frontier = 0
+    added_to_frontier = 0  # reflective of time complexity
     popped = 0
+    max_frontier = 0  # reflective of space complexity
 
     def __init__(self, init_state, goal_state):
         self.init_state = init_state
@@ -89,6 +90,10 @@ class Puzzle(object):
                             fvalue = child_puzzle.f_score()
                             heapq.heappush(FRONTIER, (fvalue, child_puzzle))
                             Puzzle.added_to_frontier += 1
+
+                            # For space complexity
+                            if len(FRONTIER) > Puzzle.max_frontier:
+                                Puzzle.max_frontier = len(FRONTIER)
         else:
             return ['UNSOLVABLE']
 
@@ -110,26 +115,82 @@ class Puzzle(object):
         output.reverse()
         return output
 
-    def hValue(self):
-        count = 0
+    def countHorizontalConflict(self):
         n = len(self.init_state)
+        totalCount = 0
+
+        for row in range(0, n):
+            # Returns the entire row array
+            rowArr = self.init_state[row]
+
+            for i in range(0, n):
+                conflictCount = 0
+                currValue = rowArr[i]
+
+                for j in range(i + 1, n):
+                    nextValue = rowArr[j]
+
+                    if (currValue != 0 and nextValue != 0):
+                        currTargetRow = int((currValue - 1) / n)
+                        nextTargetRow = int((nextValue - 1) / n)
+
+                        # Both current and next values are in correct row
+                        if (row == currTargetRow and row == nextTargetRow):
+                            if currValue > nextValue:
+                                conflictCount += 1
+
+                if (conflictCount > 0):
+                    totalCount += 1
+
+        return totalCount
+
+    def countVerticalConflict(self):
+        n = len(self.init_state)
+        totalCount = 0
+
+        for col in range(0, n):
+            # Returns the entire column arr
+            colArr = [item[col] for item in self.init_state]
+
+            for i in range(0, n):
+                conflictCount = 0
+                currValue = colArr[i]
+
+                for j in range(i + 1, n):
+                    nextValue = colArr[j]
+
+                    if (currValue != 0 and nextValue != 0):
+                        currTargetCol = (currValue - 1) % n
+                        nextTargetCol = (nextValue - 1) % n
+
+                        # Both curr and next values are in correct column
+                        if (col == currTargetCol and col == nextTargetCol):
+                            if currValue > nextValue:
+                                conflictCount += 1
+
+                if (conflictCount > 0):
+                    totalCount += 1
+
+        return totalCount
+
+    def manhattanDistance(self):
+        n = len(goal_state)
+        distSum = 0
         for x in range(0, n):
             for y in range(0, n):
-                current = self.init_state[x][y]
+                currentValue = self.init_state[x][y]
 
-                if (current != 0):
-                    targetX = int((current - 1) / n)
-                    targetY = (current - 1) % n
+                if (currentValue != 0):
+                    targetX = int((currentValue - 1) / n)
+                    targetY = (currentValue - 1) % n
+                    distX = x - targetX
+                    distY = y - targetY
+                    distSum += abs(distX) + abs(distY)
 
-                    if (x != targetX):
-                        count += 1
-                    if (y != targetY):
-                        count += 1
-
-        return count
+        return distSum
 
     def f_score(self):
-        return self.cost + self.hValue()
+        return ((self.countHorizontalConflict() + self.countVerticalConflict()) * 2) + self.cost + self.manhattanDistance()
 
     def findPossibleActions(self, x, y):
         max_y_row = len(self.goal_state) - 1
@@ -274,6 +335,9 @@ if __name__ == "__main__":
     ans = puzzle.solve()
     toc = time.time()
     print("Found solution in " + str(toc - tic) + " seconds")
+    print("Time - No. nodes added to frontier: " + str(puzzle.added_to_frontier))
+    print("Space - Max frontier size: " + str(puzzle.max_frontier))
+    print("Size of solution: " + str(len(ans)))
 
     with open(sys.argv[2], 'a') as f:
         for answer in ans:

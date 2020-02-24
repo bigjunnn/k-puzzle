@@ -86,7 +86,7 @@ class Puzzle(object):
                             # IMPLEMENT UR HEURISTIC AND PUT IT HERE
                             # MUST BE A NEGATIVE NUM SINCE HEAPQ IS A MIN HEAP
 
-                            hcost = child_puzzle.manhattanDistance() - child_puzzle.cost
+                            hcost = child_puzzle.manhattanDistance() + child_puzzle.cost
                             heapq.heappush(FRONTIER, (hcost, child_puzzle))
                             Puzzle.added_to_frontier = Puzzle.added_to_frontier + 1
         else:
@@ -142,12 +142,7 @@ class Puzzle(object):
                 distRow = abs(x - targetRow)
                 dist = distCol + distRow
                 distSum = distSum + dist
-                """print(targetNum)
-                print(x * numCols + y + 1)
-                print(dist)
-                print("\n")
-        print(distSum * -1)"""
-        return distSum * -1
+        return distSum
 
     def permutationInversion(self):
         numRows = len(goal_state)
