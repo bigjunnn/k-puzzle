@@ -47,7 +47,8 @@ class Puzzle(object):
     goalActions = []
     visited = 0
     added_to_frontier = 0
-    popped = 0
+    popped = 0  # reflective of time complexity
+    max_frontier = 0  # reflective of space complexity
 
     def __init__(self, init_state, goal_state):
         self.init_state = init_state
@@ -62,7 +63,7 @@ class Puzzle(object):
         VISITING = set()
         FRONTIER = []
 
-        source_node = Node(init_state, goal_state)
+        source_node = Node(self.init_state, self.goal_state)
         zero_x, zero_y = Puzzle.findZeroDimension(source_node)
         source_node.setParams(zero_x, zero_y, None, None, 0)
 

@@ -46,7 +46,8 @@ class Puzzle(object):
     goalActions = []
     visited = 0
     added_to_frontier = 0
-    popped = 0
+    popped = 0  # reflective of time complexity
+    max_frontier = 0  # reflective of space complexity
 
     def __init__(self, init_state, goal_state):
         self.init_state = init_state
@@ -60,7 +61,7 @@ class Puzzle(object):
         VISITED = set()
         FRONTIER = []
 
-        source_node = Node(init_state, goal_state)
+        source_node = Node(self.init_state, self.goal_state)
         zero_x, zero_y = Puzzle.findZeroDimension(source_node)
         source_node.setParams(zero_x, zero_y, None, None, 0)
 
@@ -86,7 +87,7 @@ class Puzzle(object):
                     for next_action in possible_actions:
                         child_state, child_x, child_y = self.apply_action_to_state(
                             currNode.init_state, next_action, currNode.zero_x_coord, currNode.zero_y_coord)
-                        child_node = Node(child_state, goal_state)
+                        child_node = Node(child_state, self.goal_state)
 
                         if child_node not in VISITED:
                             child_node.setParams(
@@ -95,6 +96,10 @@ class Puzzle(object):
                             fvalue = Puzzle.f_score(child_node)
                             heapq.heappush(FRONTIER, (fvalue, child_node))
                             Puzzle.added_to_frontier += 1
+
+                            # For space complexity
+                            if len(FRONTIER) > Puzzle.max_frontier:
+                                Puzzle.max_frontier = len(FRONTIER)
         else:
             return ['UNSOLVABLE']
 
