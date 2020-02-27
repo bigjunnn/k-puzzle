@@ -59,6 +59,7 @@ class Puzzle(object):
 
     def solve(self):
         VISITED = set()
+        VISITING = set()
         FRONTIER = []
 
         source_node = Node(self.init_state, self.goal_state)
@@ -66,7 +67,6 @@ class Puzzle(object):
         source_node.setParams(zero_x, zero_y, None, None, 0)
 
         if Puzzle.isSolvable(source_node):
-
             heapq.heappush(
                 FRONTIER, (Puzzle.f_score(source_node), source_node))
 
@@ -77,29 +77,30 @@ class Puzzle(object):
                 Puzzle.popped += 1
                 VISITED.add(currNode)
 
-                if currNode.isGoalState():
-                    return recursiveBacktrack(currNode)
-                else:
-                    possible_actions = self.findPossibleActions(
-                        currNode.zero_x_coord, currNode.zero_y_coord)
-                    shuffle(possible_actions)
+                possible_actions = self.findPossibleActions(
+                    currNode.zero_x_coord, currNode.zero_y_coord)
+                shuffle(possible_actions)
 
-                    for next_action in possible_actions:
-                        child_state, child_x, child_y = self.apply_action_to_state(
-                            currNode.init_state, next_action, currNode.zero_x_coord, currNode.zero_y_coord)
-                        child_node = Node(child_state, self.goal_state)
+                for next_action in possible_actions:
+                    child_state, child_x, child_y = self.apply_action_to_state(
+                        currNode.init_state, next_action, currNode.zero_x_coord, currNode.zero_y_coord)
+                    child_node = Node(child_state, goal_state)
 
-                        if child_node not in VISITED:
+                    if child_node not in VISITED:
+                        if child_node not in VISITING:
+                            child_node = Node(child_state, goal_state)
                             child_node.setParams(
                                 child_x, child_y, next_action, currNode, currNode.cost + 1)
-
-                            fvalue = Puzzle.f_score(child_node)
-                            heapq.heappush(FRONTIER, (fvalue, child_node))
-                            Puzzle.added_to_frontier += 1
-
-                            # For space complexity
-                            if len(FRONTIER) > Puzzle.max_frontier:
-                                Puzzle.max_frontier = len(FRONTIER)
+                            if child_node.isGoalState():
+                                return recursiveBacktrack(child_node)
+                            else:
+                                fvalue = Puzzle.f_score(child_node)
+                                heapq.heappush(FRONTIER, (fvalue, child_node))
+                                VISITING.add(child_node)
+                                Puzzle.added_to_frontier += 1
+                    else:
+                        if child_node in VISITING:
+                            VISITING.remove(child_node)
         else:
             return ['UNSOLVABLE']
 
