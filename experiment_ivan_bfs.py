@@ -49,7 +49,7 @@ class Puzzle(object):
         VISITED = set()
         FRONTIER = deque()
 
-        source_puzzle = Puzzle(init_state, goal_state)
+        source_puzzle = Puzzle(self.init_state, self.goal_state)
         zero_x, zero_y = source_puzzle.findZeroDimension()
         source_puzzle.setParams(zero_x, zero_y, None, None, 0)
 
@@ -72,7 +72,7 @@ class Puzzle(object):
                     for next_action in possible_actions:
                         child_state, child_x, child_y = self.apply_action_to_state(
                             currentPuzzle.init_state, next_action, currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
-                        child_puzzle = Puzzle(child_state, goal_state)
+                        child_puzzle = Puzzle(child_state, self.goal_state)
 
                         if child_puzzle not in VISITED:
                             child_puzzle.setParams(

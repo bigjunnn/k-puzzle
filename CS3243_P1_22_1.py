@@ -13,7 +13,8 @@ class Puzzle(object):
     goalActions = []
     visited = 0
     added_to_frontier = 0
-    popped = 0
+    popped = 0 # reflective of time complexity
+    max_frontier = 0  # reflective of space complexity
 
     def __init__(self, init_state, goal_state):
         self.init_state = init_state
@@ -50,7 +51,7 @@ class Puzzle(object):
         VISITED = set()
         FRONTIER = deque()
 
-        source_puzzle = Puzzle(init_state, goal_state)
+        source_puzzle = Puzzle(self.init_state, self.goal_state)
         zero_x, zero_y = source_puzzle.findZeroDimension()
         source_puzzle.setParams(zero_x, zero_y, None, None, 0)
 
@@ -73,13 +74,16 @@ class Puzzle(object):
                     for next_action in possible_actions:
                         child_state, child_x, child_y = self.apply_action_to_state(
                             currentPuzzle.init_state, next_action, currentPuzzle.zero_x_coord, currentPuzzle.zero_y_coord)
-                        child_puzzle = Puzzle(child_state, goal_state)
+                        child_puzzle = Puzzle(child_state, self.goal_state)
 
                         if child_puzzle not in VISITED:
                             child_puzzle.setParams(
                                 child_x, child_y, next_action, currentPuzzle, currentPuzzle.cost+1)
                             FRONTIER.append(child_puzzle)
                             Puzzle.added_to_frontier = Puzzle.added_to_frontier + 1
+                            # For space complexity
+                            if len(FRONTIER) > Puzzle.max_frontier:
+                                Puzzle.max_frontier = len(FRONTIER)
         else:
             return ['UNSOLVABLE']
 
