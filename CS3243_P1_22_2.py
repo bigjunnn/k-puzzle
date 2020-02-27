@@ -59,7 +59,6 @@ class Puzzle(object):
 
     def solve(self):
         VISITED = set()
-        VISITING = set()
         FRONTIER = []
 
         source_node = Node(self.init_state, self.goal_state)
@@ -87,20 +86,15 @@ class Puzzle(object):
                     child_node = Node(child_state, goal_state)
 
                     if child_node not in VISITED:
-                        if child_node not in VISITING:
-                            child_node = Node(child_state, goal_state)
-                            child_node.setParams(
-                                child_x, child_y, next_action, currNode, currNode.cost + 1)
-                            if child_node.isGoalState():
-                                return recursiveBacktrack(child_node)
-                            else:
-                                fvalue = Puzzle.f_score(child_node)
-                                heapq.heappush(FRONTIER, (fvalue, child_node))
-                                VISITING.add(child_node)
-                                Puzzle.added_to_frontier += 1
-                    else:
-                        if child_node in VISITING:
-                            VISITING.remove(child_node)
+                        child_node = Node(child_state, goal_state)
+                        child_node.setParams(
+                            child_x, child_y, next_action, currNode, currNode.cost + 1)
+                        if child_node.isGoalState():
+                            return recursiveBacktrack(child_node)
+                        else:
+                            fvalue = Puzzle.f_score(child_node)
+                            heapq.heappush(FRONTIER, (fvalue, child_node))
+                            Puzzle.added_to_frontier += 1
         else:
             return ['UNSOLVABLE']
 
