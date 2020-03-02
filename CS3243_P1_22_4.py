@@ -86,10 +86,9 @@ class Puzzle(object):
                     for next_action in possible_actions:
                         child_state, child_x, child_y = self.apply_action_to_state(
                             currNode.init_state, next_action, currNode.zero_x_coord, currNode.zero_y_coord)
-                        child_node = Node(child_state, goal_state)
+                        child_node = Node(child_state, self.goal_state)
 
                         if child_node not in VISITED:
-                            child_node = Node(child_state, goal_state)
                             child_node.setParams(
                                 child_x, child_y, next_action, currNode, currNode.cost + 1)
 

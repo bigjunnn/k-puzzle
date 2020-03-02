@@ -67,7 +67,8 @@ class Puzzle(object):
         source_node.setParams(zero_x, zero_y, None, None, 0)
 
         if Puzzle.isSolvable(source_node):
-            heapq.heappush(FRONTIER, (Puzzle.f_score(source_node), source_node))
+            heapq.heappush(
+                FRONTIER, (Puzzle.f_score(source_node), source_node))
 
             while len(FRONTIER) != 0:
 
@@ -79,16 +80,18 @@ class Puzzle(object):
                 if currNode.isGoalState():
                     return recursiveBacktrack(currNode)
                 else:
-                    possible_actions = self.findPossibleActions(currNode.zero_x_coord, currNode.zero_y_coord)
+                    possible_actions = self.findPossibleActions(
+                        currNode.zero_x_coord, currNode.zero_y_coord)
                     shuffle(possible_actions)
 
                     for next_action in possible_actions:
-                        child_state, child_x, child_y = self.apply_action_to_state(currNode.init_state, next_action, currNode.zero_x_coord, currNode.zero_y_coord)
-                        child_node = Node(child_state, goal_state)
+                        child_state, child_x, child_y = self.apply_action_to_state(
+                            currNode.init_state, next_action, currNode.zero_x_coord, currNode.zero_y_coord)
+                        child_node = Node(child_state, self.goal_state)
 
                         if child_node not in VISITED:
-                            child_node = Node(child_state, goal_state)
-                            child_node.setParams(child_x, child_y, next_action, currNode, currNode.cost + 1)
+                            child_node.setParams(
+                                child_x, child_y, next_action, currNode, currNode.cost + 1)
 
                             fvalue = Puzzle.f_score(child_node)
                             heapq.heappush(FRONTIER, (fvalue, child_node))
