@@ -7,11 +7,11 @@ import CS3243_P1_22_2
 import CS3243_P1_22_3
 import CS3243_P1_22_4
 
-## Empirical Experiment - Usage: python CS3243_P1_22_5.py <output_file> ##
+## Empirical Experiment - Usage: python CS3243_P1_22_5.py ##
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 1:
         raise ValueError("Wrong number of arguments!")
 
     test_size = 100
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     a3_avg_size = a3_sum_size / a3_num_test
     a3_avg_time = a3_sum_time / a3_num_test
 
-    with open(sys.argv[1], 'a') as f:
+    with open("CS3243_P1_22_5_Results.txt", 'a') as f:
         f.write("Number of test cases randomly generated: " + str(test_size) + '\n')
         f.write('\n')
         f.write("Search Type: Uninformed Search" + '\n')
