@@ -2,38 +2,38 @@ Number of test cases randomly generated: 100
 
 Search Type: Uninformed Search
 Algorithm Used: Breadth First Search
-Average number of nodes popped: 2708755.090909091
-Average maximum Frontier size:  73071.0
-Average time taken to solve:    5.186169423840263 s
-Average solution steps:         21.5
+Average number of nodes popped: 2820509
+Average maximum Frontier size:  70698
+Average time taken to solve:    9.70156257803 s
+Average solution steps:         21
 Number of unsolvable puzzles:   56 out of 100
 
 
 Search Type: Informed Search
 Algorithm Used: A* Search
 Heuristics 1: Number of misplaced tiles
-Average number of nodes popped: 3505883.590909091
-Average maximum Frontier size:  73254.36363636363
-Average time taken to solve:    11.008851089260794 s
-Average solution steps:         21.5
+Average number of nodes popped: 3666922
+Average maximum Frontier size:  71925
+Average time taken to solve:    19.7423943498 s
+Average solution steps:         21
 Number of unsolvable puzzles:   56 out of 100
 
 
 Search Type: Informed Search
 Algorithm Used: A* Search
 Heuristics 2: Total Manhattan Distance
-Average number of nodes popped: 34130.045454545456
-Average maximum Frontier size:  4485.0
-Average time taken to solve:    0.13208989663557572 s
-Average solution steps:         21.5
+Average number of nodes popped: 37669
+Average maximum Frontier size:  4273
+Average time taken to solve:    0.171781090173 s
+Average solution steps:         21
 Number of unsolvable puzzles:   56 out of 100
 
 
 Search Type: Informed Search
 Algorithm Used: A* Search
 Heuristics 3: Total Linear Conflicts
-Average number of nodes popped: 18936.704545454544
-Average maximum Frontier size:  2665.0
-Average time taken to solve:    0.12920505892146716
-Average solution steps:         21.5
+Average number of nodes popped: 19771
+Average maximum Frontier size:  2071
+Average time taken to solve:    0.145327324217
+Average solution steps:         21
 Number of unsolvable puzzles:   56 out of 100
